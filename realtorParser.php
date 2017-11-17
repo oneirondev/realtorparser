@@ -1,20 +1,15 @@
 <meta charset="utf-8">
 <?php
 
-	class RealtorParcer
+	abstract class RealtorParcer
 	{
 		protected $url = '';
+		protected $connection = null;
 
-		function __construct($hostname, $slug, $params = array(), $protocol = "https")
-		{
-			$url = $this->buildUrl($hostname, $slug, $params, $protocol);
-			if ($this->isUrlAvaible($url)) {
-				$this->url = $url;
-				echo $this->url;
-			}
-		}
+		abstract protected function getOffersList();
+		abstract protected function getOfferInfo();
 
-		private function buildUrl($hostname, $slug, $params, $protocol = "https") {
+		protected function buildUrl($hostname, $slug, $params, $protocol) {
 			$url = $protocol.'://'.$hostname.'/';
 
 			foreach ($slug as $slug_item) {
@@ -25,7 +20,7 @@
 			return $url;
 		} 
 
-		private function isUrlAvaible ($url) {
+		protected function isUrlAvaible ($url) {
 			if (!filter_var( $url, FILTER_VALIDATE_URL)) {
 				echo "<strong>RealtorParcer error:</strong> данный домен невалидный!";
 				return false;
@@ -48,14 +43,25 @@
 		}
 	}
 
-	$parcer = new RealtorParcer(
-		'm.avito.ru',
-		array(
-			'respublika_krym',
-			'nedvizhimost'
-		),
-		array(
-			's' 	=> 101, 
-			'user' 	=> 1
-		)
-	);
+	class AvitoParcer extends RealtorParcer
+	{
+		
+		function __construct(
+			$hostname = 'm.avito.ru', 
+			$slug = array('respublika_krym', 'nedvizhimost'), 
+			$params = array('user' => '1'), 
+			$protocol = 'https')
+		{
+			$this->url = $this->buildUrl($hostname, $slug, $params, $protocol);	
+		}
+
+		protected function getOffersList() {
+			return null;
+		}
+		
+		protected function getOfferInfo() {
+			return null;
+		}
+	}
+
+	$parcer = new AvitoParcer();
