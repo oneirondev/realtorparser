@@ -8,6 +8,7 @@
 
 		abstract protected function getOffersList();
 		abstract protected function getOfferInfo();
+		abstract protected function run();
 
 		protected function buildUrl($hostname, $slug, $params, $protocol) {
 			$url = $protocol.'://'.$hostname.'/';
@@ -41,6 +42,15 @@
         	echo "<strong>RealtorParcer error:</strong> данный домен недоступен!";
         	return false;
 		}
+
+		public function connect() {
+			$this->connection = curl_init();
+			curl_setopt($this->connection, CURLOPT_RETURNTRANSFER, true);
+		}
+
+		public function disconnect() {
+			curl_close($this->connection);
+		}
 	}
 
 	class AvitoParcer extends RealtorParcer
@@ -52,7 +62,10 @@
 			$params = array('user' => '1'), 
 			$protocol = 'https')
 		{
-			$this->url = $this->buildUrl($hostname, $slug, $params, $protocol);	
+			$url = $this->buildUrl($hostname, $slug, $params, $protocol);
+			if ($this->isUrlAvaible($url)) {
+				$this->url = $url;
+			}	
 		}
 
 		protected function getOffersList() {
@@ -62,6 +75,15 @@
 		protected function getOfferInfo() {
 			return null;
 		}
+
+		public function run() {
+			return null;
+		}
 	}
 
 	$parcer = new AvitoParcer();
+	$parcer->connect();
+
+	$parcer->run();
+
+	$parcer->disconnect();
