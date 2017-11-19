@@ -8,7 +8,7 @@
 
 		abstract protected function getOffersList();
 		abstract protected function getOfferInfo();
-		abstract protected function run();
+		abstract protected function init();
 
 		protected function buildUrl($hostname, $slug, $params, $protocol) {
 			$url = $protocol.'://'.$hostname.'/';
@@ -84,6 +84,6 @@
 	$parcer = new AvitoParcer();
 	$parcer->connect();
 
-	$parcer->run();
+	$parcer->init();
 
 	$parcer->disconnect();
