@@ -53,37 +53,25 @@
 		}
 	}
 
-	class AvitoParcer extends RealtorParcer
+	class VKParser
 	{
+		public $accessUrl = '';
+
+		private function getAccessCodeUrl () {
+			return 'https://oauth.vk.com/authorize?' . http_build_query(array(
+				'client_id'	=> '6271159',
+				'redirect_uri' => 'http://realtor.local/realtorParser.php',
+				'scope' => implode( '&', array(
+					'wall', 'groups'
+				))
+			));
+		}
 		
-		function __construct(
-			$hostname = 'm.avito.ru', 
-			$slug = array('respublika_krym', 'nedvizhimost'), 
-			$params = array('user' => '1'), 
-			$protocol = 'https')
+		function __construct()
 		{
-			$url = $this->buildUrl($hostname, $slug, $params, $protocol);
-			if ($this->isUrlAvaible($url)) {
-				$this->url = $url;
-			}	
-		}
-
-		protected function getOffersList() {
-			return null;
-		}
-		
-		protected function getOfferInfo() {
-			return null;
-		}
-
-		public function run() {
-			return null;
+			$this->accessUrl = $this->getAccessCodeUrl ();
 		}
 	}
 
-	$parcer = new AvitoParcer();
-	$parcer->connect();
-
-	$parcer->init();
-
-	$parcer->disconnect();
+	$parcer = new VKParser();
+	echo $parcer->accessUrl;
