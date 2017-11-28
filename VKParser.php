@@ -124,6 +124,30 @@
 
 							$temp_data['text'] = $post['text'];
 
+							if (isset($post['attachments'])) {
+								$temp_data['photos'] = array();
+								foreach ($post['attachments'] as $attachment) {
+									if ($attachment['type'] == 'photo') {
+										$attachment_src = array();
+										foreach ($attachment['photo'] as $key => $value) {
+											if (preg_match("/src[_0-9a-zA-Z]*/", $key)){
+												array_push($attachment_src, $value);
+											}
+										}
+
+										$attachment_src = array(
+											'src' => $attachment_src[count($attachment_src) - 1]
+										);
+
+										if (isset($attachment['photo']['text']) and !empty($attachment['photo']['text'])) {
+											$attachment_src['text'] = $attachment['photo']['text']; 
+										}
+
+										array_push($temp_data['photos'], $attachment_src);
+									}
+								}
+							}
+
 							$this->__mysql->query (
 								"
 									INSERT INTO posts
