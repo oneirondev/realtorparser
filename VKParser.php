@@ -1,8 +1,7 @@
-<meta charset="utf-8">
+
 <pre>
 <?php
-	/*
-	$oauth_params = array(
+	/*$oauth_params = array(
 		'client_id' 	=> '6271159',	
 		'redirect_uri'	=> 'https://oauth.vk.com/blank.html',
 		'scope'			=> implode('&', array(
@@ -17,18 +16,19 @@
 		'client_id' 	=> $oauth_params['client_id'],
 		'client_secret' => 'm4ahT6NGKmu4gtRhTSig',
 		'redirect_uri'	=> $oauth_params['redirect_uri'],
-		'code'			=> 'cf6b1118be41fb3bff'
+		'code'			=> '2797f16939f05808df'
 	);
 
 	$url = 'https://oauth.vk.com/access_token?' . http_build_query($access_tokenparams);
-	#echo $url . "\n";
-	*/
+	echo $url . "\n";*/
+	
 
 	class VKParser {
 		private $__access_token = null;
 		private $__ch			= null;
 		private $__user_id 		= null;
-		private $__groups_ids	= array();	
+		private $__groups_ids	= array();
+		private $__mysql		= null;	
 
 		private function __print_apierror ($error_code, $error_msg) {
 			echo '<strong>VK API ERROR </strong>' . $error_code . ': ' . $error_msg . "\n";
@@ -79,6 +79,15 @@
 			}
 
 			$this->__groups_ids = $groups_ids;
+
+			$this->__mysql->query("
+				CREATE TABLE IF NOT EXISTS posts
+					(
+						id INT UNSIGNED,
+					    to_id INT
+					)"
+			);
+
 			return true;
 		}
 
@@ -100,19 +109,33 @@
 
 				foreach ($group_posts as $post) {
 					if (!is_null($post['text']) and ($post['text'] != '') and !isset($post["is_pinned"])) {
-						$temp_data 			= array();
-						$temp_data['id'] 	= $post['id'];
-						$temp_data['to_id']	= $post['to_id'];
+						$temp_data 				= array();
+						$temp_data['id'] 		= $post['id'];
+						$temp_data['to_id']		= $post['to_id'];
 
-						if (isset($post['signer_id'])) {
-							$temp_data['signer_id'] = $post['signer_id'];
-						} elseif ($post['from_id'] != $post['to_id']) {
-							$temp_data['from_id'] = $post['from_id'];
+						if (is_null(mysqli_fetch_array($this->__mysql->query(
+							"SELECT id, to_id FROM posts WHERE id=" . $temp_data['id'] . " and to_id=" . $temp_data['to_id'] 
+						)))) {
+							if (isset($post['signer_id'])) {
+								$temp_data['signer_id'] = $post['signer_id'];
+							} elseif ($post['from_id'] != $post['to_id']) {
+								$temp_data['from_id'] = $post['from_id'];
+							}
+
+							$temp_data['text'] = $post['text'];
+
+							$this->__mysql->query (
+								"
+									INSERT INTO posts
+									VALUES (
+										".$temp_data['id'].",
+										".$temp_data['to_id']."
+									);
+								"
+							);
+
+							array_push($posts, $temp_data);
 						}
-
-						$temp_data['text'] = $post['text'];
-
-						array_push($posts, $temp_data);
 					}
 				}
 			}
@@ -121,11 +144,23 @@
 		} 
 
 		
-		function __construct ( $access_token ) {
+		function __construct ( 
+				$access_token, 
+				$mysql_host = 'localhost',
+				$mysql_user = 'root',
+				$mysql_pass = '',
+				$mysql_dt 	= 'parser'
+			) {
 			$this->__ch = curl_init();
 			curl_setopt($this->__ch, CURLOPT_RETURNTRANSFER, true);
 
 			$this->__access_token = $access_token;
+			$this->__mysql = new mysqli(
+				$mysql_host,
+				$mysql_user,
+				$mysql_pass,
+				$mysql_dt
+			);
 		}
 
 		public function __destruct () {
@@ -133,6 +168,6 @@
 		}
 	}
 
-	$test_parser = new VKParser('84e1bb4bd3d869e50b21081f0974140b13dad302c6a35f4f676e29eed0ce590f6367ae40232fa7330de26');
+	$test_parser = new VKParser('9408ba33ac1b6c449306300c9d175cf0e1795538d8064b8d6c598f8186dd0e0003c7173bce6bc5a6ca368');
 	$test_parser->init();
 	print_r($test_parser->get_posts(3));
